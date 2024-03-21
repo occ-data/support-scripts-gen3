@@ -34,7 +34,7 @@ This file contains the bash script which installs helm chart for the external se
 
 - The variables shown in `external_secrets.sh` are following
     - `<<your-aws-account-number>>` : AWS account number in which the commons would spin up
-    - `<<your-aws-region>>`: AWS reigion in which EKS is spun up.
+    - `<<your-aws-region>>`: AWS region in which EKS is spun up.
     - `<<name-for-new-iam-policy>>` : Name for an IAM Policy
     - `<<name-for-new-iam-user>>` : Name of IAM user which would be using the above IAM policy to spin up helm charts
-    - `<<name-for-aws-profile>>"` : AWS profile from the local/VM which can acccess the AWS Account number given, if profile value would be `default`
+    - `<<name-for-aws-profile>>` : AWS profile from the local/VM which can access the AWS Account number given, if the profile value is `default`

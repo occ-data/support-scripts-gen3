@@ -31,61 +31,6 @@ aws-es-proxy:
   enabled: true
   esEndpoint: <<your-elastic-search-endpoint>>
 
-
-guppy:
-  enabled: true
-  image:
-    tag: 2024.04   # this can be any latest version of guppy, see https://quay.io/repository/cdis/guppy to select a version
-  esEndpoint: http://elasticsearch.default.svc.cluster.local:9200
-  indices:
-  - index: dev_case
-    type: case
-
-indexd:
-  # -- (bool) Whether to deploy the indexd subchart.
-  enabled: true
-  image:
-    tag: 2024.04 # this can be any latest of indexd, see https://quay.io/repository/cdis/indexd to select a version
-  externalSecrets:
-    createK8sServiceCredsSecret: true
-  defaultPrefix: <<your-index-prefix>>
-
-peregrine:
-  enabled: true
-  image:
-    tag: 2024.04  # this can be any latest of peregrine, see https://quay.io/repository/cdis/peregrine to select a version
-  arboristUrl: http://arborist-service
-
-revproxy:
-  enabled: true
-  ingress:
-    enabled: true
-    className: "nginx"
-    annotations:
-      acme.cert-manager.io/http01-edit-in-place: "true"
-      cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    hosts:
-    - host: <<your-website-URL>>
-      paths:
-        - path: /
-          pathType: Prefix
-    tls:
-      - secretName: cm-gen3-certs-prod        # pragma: allowlist secret
-        hosts:
-          - <<your-website-URL>>
-
-sheepdog:
-  enabled: true
-  image:
-    tag: 2024.04 # this can be any latest of sheepdog, see https://quay.io/repository/cdis/sheepdog to select a version
-  fenceUrl: https://gen3-demo.cloud.krum.io/user
-  volumeMounts:
-  - name: "config-volume"
-    readOnly: true
-    mountPath: "/var/www/sheepdog/settings.py"
-    subPath: "wsgi.py"
-
-
 etl:
   # -- (bool) Whether to deploy the etl subchart.
   enabled: true
@@ -115,7 +60,6 @@ etl:
           - name: _samples_count
             path: samples
             fn: count
-
 
 fence:
   enabled: true
@@ -428,7 +372,29 @@ fence:
       users:
         user@exmaple.com: {}
 
+guppy:
+  enabled: true
+  image:
+    tag: 2024.04   # this can be any latest version of guppy, see https://quay.io/repository/cdis/guppy to select a version
+  esEndpoint: http://elasticsearch.default.svc.cluster.local:9200
+  indices:
+  - index: dev_case
+    type: case
 
+indexd:
+  # -- (bool) Whether to deploy the indexd subchart.
+  enabled: true
+  image:
+    tag: 2024.04 # this can be any latest of indexd, see https://quay.io/repository/cdis/indexd to select a version
+  externalSecrets:
+    createK8sServiceCredsSecret: true
+  defaultPrefix: <<your-index-prefix>>
+
+peregrine:
+  enabled: true
+  image:
+    tag: 2024.04  # this can be any latest of peregrine, see https://quay.io/repository/cdis/peregrine to select a version
+  arboristUrl: http://arborist-service
 
 portal:
   enabled: true
@@ -696,6 +662,35 @@ portal:
         }
       }
 
+
+revproxy:
+  enabled: true
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      acme.cert-manager.io/http01-edit-in-place: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+    - host: <<your-website-URL>>
+      paths:
+        - path: /
+          pathType: Prefix
+    tls:
+      - secretName: cm-gen3-certs-prod        # pragma: allowlist secret
+        hosts:
+          - <<your-website-URL>>
+
+sheepdog:
+  enabled: true
+  image:
+    tag: 2024.04 # this can be any latest of sheepdog, see https://quay.io/repository/cdis/sheepdog to select a version
+  fenceUrl: https://gen3-demo.cloud.krum.io/user
+  volumeMounts:
+  - name: "config-volume"
+    readOnly: true
+    mountPath: "/var/www/sheepdog/settings.py"
+    subPath: "wsgi.py"
 
 ambassador:
   enabled: false
