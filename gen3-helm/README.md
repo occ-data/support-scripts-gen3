@@ -40,3 +40,19 @@ This file contains the bash script which installs helm chart for the external se
     - `<<name-for-new-iam-policy>>` : Name for an IAM Policy
     - `<<name-for-new-iam-user>>` : Name of IAM user which would be using the above IAM policy to spin up helm charts
     - `<<name-for-aws-profile>>` : AWS profile from the local/VM which can access the AWS Account number given, if the profile value is `default`
+
+
+#### fence-config-template.yaml
+
+This file configures our Authentication service **Fence**.  The primary configurations that we will concern ourselves with will be our identity provider's client ID and client Secret as well as our intended hostname.
+
+- The variables shown in `fence-config-template.yaml` are the following:
+    - `<<your-website-URL>>` : URL of your website without http:// or https://
+    - `<<your-google-client-id>>` : (depends on your iDP) Your google project's client ID
+    - `<<your-google-client-secret>>` : (depends on your iDP) Your google project's client secret
+ 
+- Once you have configured the mentioned values, you are expected to manually provide the updated contents to your AWS Secrets Manager
+    - Ideally, name your secret `<<your-vpc-name>>-fence-config`
+    - This should match up your values configuration for `.Values.fence.externalSecrets.fenceConfig`
+ 
+
