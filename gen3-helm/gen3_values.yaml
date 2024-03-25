@@ -30,6 +30,8 @@ arborist:
 aws-es-proxy:
   enabled: true
   esEndpoint: <<your-elastic-search-endpoint>>
+  externalSecrets:
+    awsCreds:  <<your-vpc-name>>-aws-es-proxy-creds
 
 etl:
   # -- (bool) Whether to deploy the etl subchart.
@@ -685,7 +687,7 @@ sheepdog:
   enabled: true
   image:
     tag: 2024.04 # this can be any latest of sheepdog, see https://quay.io/repository/cdis/sheepdog to select a version
-  fenceUrl: https://gen3-demo.cloud.krum.io/user
+  fenceUrl: https://<<your-website-URL>>/user
   volumeMounts:
   - name: "config-volume"
     readOnly: true

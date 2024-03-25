@@ -23,6 +23,8 @@ kubectl create secret generic prelim-aws-config --from-literal=access-key='YOUR.
     - `<<your-data-dictionary-URL>>`: S3 URL from which data dictionary will be fetched,for example, URL like [https://s3.amazonaws.com/dictionary-artifacts/datadictionary/develop/schema.json](https://s3.amazonaws.com/dictionary-artifacts/datadictionary/develop/schema.json)
     - `<<your-elastic-search-endpoint>>`: end point of the elastic search
     - `<<your-index-prefix>>` : indexd prefix of your data commons, The prefix is used to hint for a GUID, which data commons' indexd can resolve it.
+    - `<<base-64-of-favicon-image>>` : the base64 encoded code for the favicon image for Gen3 Commons
+    - `<<base-64-of-logo-image>>`: the base64 encoded code for the logo for Gen3 commons
 
 - Once you configure values.yaml according to your need, you can use `helm upgrade --install <<deployment-name> gen3/gen3  -f gen3_values.yaml` to run helm charts
 
