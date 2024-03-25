@@ -1,0 +1,729 @@
+global:
+  aws:
+    enabled: true
+    useLocalSecret:
+      enabled: true
+      localSecretName: prelim-aws-config       # pragma: allowlist secret
+  postgres:
+    dbCreate: true
+  externalSecrets:
+    deploy: true
+  dev: false
+  environment: <<your-vpc-name>>
+  hostname: <<your-website-URL>>
+  revproxyArn: arn:aws:acm:us-east-1:XXXXXXXXXX:certificate/XXXXXXXXX # <<your-website-aws-certificate-arn>>
+  dictionaryUrl: https://s3.amazonaws.com/XXXXXXXX/XXXXX/XXXXXXXX/XXXX.json  # <<your-data-dictionary-URL>>
+  portalApp: gitops
+  publicDataSets: true
+  tierAccessLevel: libre
+  tierAccessLimit: "1000"
+  netPolicy: true
+  dispatcherJobNum: 10
+  ddEnabled: false
+  manifestGlobalExtraValues:
+    fence_url: https://<<your-website-URL>>/user
+
+# Dependancy Charts
+arborist:
+  enabled: true
+
+aws-es-proxy:
+  enabled: true
+  esEndpoint: <<your-elastic-search-endpoint>>
+  externalSecrets:
+    awsCreds:  <<your-vpc-name>>-aws-es-proxy-creds
+
+etl:
+  # -- (bool) Whether to deploy the etl subchart.
+  enabled: true
+  esEndpoint: elasticsearch.default.svc.cluster.local
+  etlMapping:
+    mappings:
+      - name: dev_case
+        doc_type: case
+        type: aggregator
+        root: case
+        props:
+          - name: submitter_id
+          - name: project_id
+        flatten_props:
+          - path: demographics
+            props:
+              - name: gender
+                value_mappings:
+                  - female: F
+                  - male: M
+              - name: race
+                value_mappings:
+                  - american indian or alaskan native: Indian
+              - name: ethnicity
+              - name: year_of_birth
+        aggregated_props:
+          - name: _samples_count
+            path: samples
+            fn: count
+
+fence:
+  enabled: true
+  image:
+    tag: 2024.04 # this can be any latest of fence, see https://quay.io/repository/cdis/fence to select a version
+  externalSecrets:
+    fenceConfig: <<your-vpc-name>>-fence-config
+    createK8sFenceConfigSecret: false
+    createK8sJwtKeysSecret: true
+    createK8sGoogleAppSecrets: true
+  USER_YAML: |  ## you can get more info on how to write a useryaml at https://github.com/uc-cdis/fence/blob/master/docs/user.yaml_guide.md#format
+      cloud_providers: {}
+      groups: {}
+
+      clients:
+        wts:
+          policies:
+          - all_programs_reader
+          - open_data_reader
+
+      authz:
+        # policies automatically given to anyone, even if they haven't authenticated
+        anonymous_policies:
+        - open_data_reader
+        # policies automatically given to authenticated users (in addition to their other
+        # policies)
+        all_users_policies: []
+
+        policies:
+          - id: 'data_upload'
+            description: 'upload raw data files to S3'
+            role_ids:
+              - 'file_uploader'
+            resource_paths:
+              - '/data_file'
+
+          - id: 'all_programs_admin'
+            description: 'Can create, update, delete data in all programs.'
+            role_ids:
+              - 'admin'
+            resource_paths:
+              - '/programs/open'
+
+          - id: 'programs.test-admin'
+            description: 'program admin for test program'
+            role_ids:
+              - 'creator'
+              - 'reader'
+              - 'updater'
+              - 'deleter'
+              - 'storage_reader'
+            resource_paths:
+              - '/programs/test'
+
+          - id: 'services.sheepdog-admin'
+            description: 'CRUD access to programs and projects'
+            role_ids:
+              - 'sheepdog_admin'
+            resource_paths:
+              - '/services/sheepdog/submission/program'
+              - '/services/sheepdog/submission/project'
+          - id: 'indexd_admin'
+            description: 'full access to indexd API'
+            role_ids:
+              - 'indexd_admin'
+            resource_paths:
+              - '/programs'
+              - '/services/indexd/admin'
+          - id: 'open_data_reader'
+            role_ids:
+              - 'peregrine_reader'
+              - 'guppy_reader'
+              - 'fence_storage_reader'
+            resource_paths:
+              - '/open'
+          - id: 'all_programs_reader'
+            role_ids:
+              - 'reader'
+              - 'storage_reader'
+            resource_paths:
+              - '/programs'
+          - id: 'programs.open_reader'
+            role_ids:
+              - 'reader'
+              - 'storage_reader'
+            resource_paths:
+              - '/programs/open'
+          - id: 'programs.open_submitter'
+            role_ids:
+              - 'creator'
+              - 'reader'
+              - 'updater'
+              - 'deleter'
+              - 'storage_reader'
+              - 'storage_writer'
+            resource_paths:
+              - '/programs/open'
+          - id: 'services.sheepdog_admin'
+            description: 'CRUD access to programs and projects'
+            role_ids:
+              - 'sheepdog_admin'
+            resource_paths:
+              - '/services/sheepdog/submission/program'
+              - '/services/sheepdog/submission/project'
+          #code added for reader and submitter permissions for program nygcdemo, program 1 and program 2
+
+        resources:
+          - name: data_file
+          - name: 'services'
+            subresources:
+              - name: 'sheepdog'
+                subresources:
+                  - name: 'submission'
+                    subresources:
+                      - name: 'program'
+                      - name: 'project'
+              - name: 'indexd'
+                subresources:
+                  - name: 'admin'
+                  - name: 'bundles'
+              - name: audit
+                subresources:
+                  - name: presigned_url
+                  - name: login
+              - name: 'peregrine'
+                subresources:
+                  - name: 'program'
+                  - name: 'project'
+                  - name: 'admin'
+          - name: open
+          - name: programs
+            subresources:
+              #code added to add projects under open program
+              - name: open
+              - name: test
+                subresources:
+                - name: projects
+                  subresources:
+                  - name: ONE
+
+        roles:
+          - id: 'file_uploader'
+            description: 'can upload data files'
+            permissions:
+              - id: 'file_upload'
+                action:
+                  service: '*'
+                  method: 'file_upload'
+          - id: 'peregrine_reader'
+            permissions:
+              - id: 'reader'
+                action:
+                  service: 'peregrine'
+                  method: 'read'
+          - id: 'guppy_reader'
+            permissions:
+              - id: 'reader'
+                action:
+                  service: 'guppy'
+                  method: 'read'
+          - id: 'fence_storage_reader'
+            permissions:
+              - id: 'storage_reader'
+                action:
+                  service: 'fence'
+                  method: 'read-storage'
+
+          # All services
+          - id: 'admin'
+            description: ''
+            permissions:
+              - id: 'admin'
+                action:
+                  service: '*'
+                  method: '*'
+          - id: 'creator'
+            description: ''
+            permissions:
+              - id: 'creator'
+                action:
+                  service: '*'
+                  method: 'create'
+          - id: 'reader'
+            description: ''
+            permissions:
+              - id: 'reader'
+                action:
+                  service: '*'
+                  method: 'read'
+          - id: 'updater'
+            description: ''
+            permissions:
+              - id: 'updater'
+                action:
+                  service: '*'
+                  method: 'update'
+          - id: 'deleter'
+            description: ''
+            permissions:
+              - id: 'deleter'
+                action:
+                  service: '*'
+                  method: 'delete'
+          - id: 'storage_writer'
+            description: ''
+            permissions:
+              - id: 'storage_writer'
+                action:
+                  service: '*'
+                  method: 'write-storage'
+          - id: 'storage_reader'
+            description: ''
+            permissions:
+              - id: 'storage_reader'
+                action:
+                  service: '*'
+                  method: 'read-storage'
+
+
+          # Sheepdog admin role
+          - id: 'sheepdog_admin'
+            description: 'sheepdog admin role for program project crud'
+            permissions:
+              - id: 'sheepdog_admin_action'
+                action:
+                  service: 'sheepdog'
+                  method: '*'
+
+
+          # indexd
+          - id: 'indexd_admin'
+            # this only works if indexd.arborist is enabled in manifest!
+            description: 'full access to indexd API'
+            permissions:
+              - id: 'indexd_admin'
+                action:
+                  service: 'indexd'
+                  method: '*'
+          - id: 'indexd_record_creator'
+            description: ''
+            permissions:
+              - id: 'indexd_record_creator'
+                action:
+                  service: 'indexd'
+                  method: 'create'
+          - id: 'indexd_record_reader'
+            description: ''
+            permissions:
+              - id: 'indexd_record_reader'
+                action:
+                  service: 'indexd'
+                  method: 'read'
+          - id: 'indexd_record_updater'
+            description: ''
+            permissions:
+              - id: 'indexd_record_updater'
+                action:
+                  service: 'indexd'
+                  method: 'update'
+          - id: 'indexd_delete_record'
+            description: ''
+            permissions:
+              - id: 'indexd_delete_record'
+                action:
+                  service: 'indexd'
+                  method: 'delete'
+          - id: 'indexd_storage_reader'
+            description: ''
+            permissions:
+              - id: 'indexd_storage_reader'
+                action:
+                  service: 'indexd'
+                  method: 'read-storage'
+          - id: 'indexd_storage_writer'
+            description: ''
+            permissions:
+              - id: 'indexd_storage_writer'
+                action:
+                  service: 'indexd'
+                  method: 'write-storage'
+
+          # arborist
+          - id: 'arborist_creator'
+            description: ''
+            permissions:
+              - id: 'arborist_creator'
+                action:
+                  service: 'arborist'
+                  method: 'create'
+          - id: 'arborist_reader'
+            description: ''
+            permissions:
+              - id: 'arborist_reader'
+                action:
+                  service: 'arborist'
+                  method: 'read'
+          - id: 'arborist_updater'
+            description: ''
+            permissions:
+              - id: 'arborist_updater'
+                action:
+                  service: 'arborist'
+                  method: 'update'
+          - id: 'arborist_deleter'
+            description: ''
+            permissions:
+              - id: 'arborist_deleter'
+                action:
+                  service: 'arborist'
+                  method: 'delete'
+      users:
+        user@exmaple.com: {}
+
+guppy:
+  enabled: true
+  image:
+    tag: 2024.04   # this can be any latest version of guppy, see https://quay.io/repository/cdis/guppy to select a version
+  esEndpoint: http://elasticsearch.default.svc.cluster.local:9200
+  indices:
+  - index: dev_case
+    type: case
+
+indexd:
+  # -- (bool) Whether to deploy the indexd subchart.
+  enabled: true
+  image:
+    tag: 2024.04 # this can be any latest of indexd, see https://quay.io/repository/cdis/indexd to select a version
+  externalSecrets:
+    createK8sServiceCredsSecret: true
+  defaultPrefix: <<your-index-prefix>>
+
+peregrine:
+  enabled: true
+  image:
+    tag: 2024.04  # this can be any latest of peregrine, see https://quay.io/repository/cdis/peregrine to select a version
+  arboristUrl: http://arborist-service
+
+portal:
+  enabled: true
+  image:
+    tag: 2023.04   # this can be any latest of portal, see https://quay.io/repository/cdis/portal to select a version
+  gitops:
+    favicon: <<base-64-of-favicon-image>>
+    logo: <<base-64-of-logo-image>>
+    json: |     ## to get more info on variables in gitops json, see https://github.com/uc-cdis/data-portal/blob/master/docs/portal_config.md#the-portal-config-file
+      {
+        "graphql": {
+          "boardCounts": [
+            {
+              "graphql": "_case_count",
+              "name": "Case",
+              "plural": "Cases"
+            },
+            {
+              "graphql": "_experiment_count",
+              "name": "Experiment",
+              "plural": "Experiments"
+            },
+            {
+              "graphql": "_aliquot_count",
+              "name": "Aliquot",
+              "plural": "Aliquots"
+            }
+          ],
+          "chartCounts": [
+            {
+              "graphql": "_case_count",
+              "name": "Case"
+            },
+            {
+              "graphql": "_experiment_count",
+              "name": "Experiment"
+            },
+            {
+              "graphql": "_aliquot_count",
+              "name": "Aliquot"
+            }
+          ],
+          "projectDetails": "boardCounts"
+        },
+        "components": {
+          "appName": "Generic Data Commons Portal",
+          "index": {
+            "introduction": {
+              "heading": "Data Commons",
+              "text": "The Generic Data Commons supports the management, analysis and sharing of data for the research community.",
+              "link": "/submission"
+            },
+            "buttons": [
+              {
+                "name": "Define Data Field",
+                "icon": "data-field-define",
+                "body": "The Generic Data Commons define the data in a general way. Please study the dictionary before you start browsing.",
+                "link": "/DD",
+                "label": "Learn more"
+              },
+              {
+                "name": "Explore Data",
+                "icon": "data-explore",
+                "body": "The Exploration Page gives you insights and a clear overview under selected factors.",
+                "link": "/explorer",
+                "label": "Explore data"
+              },
+              {
+                "name": "Access Data",
+                "icon": "data-access",
+                "body": "Use our selected tool to filter out the data you need.",
+                "link": "/query",
+                "label": "Query data"
+              },
+              {
+                "name": "Submit Data",
+                "icon": "data-submit",
+                "body": "Submit Data based on the dictionary.",
+                "link": "/submission",
+                "label": "Submit data"
+              }
+            ]
+          },
+          "navigation": {
+            "title": "Generic Data Commons",
+            "items": [
+              {
+                "icon": "dictionary",
+                "link": "/DD",
+                "color": "#a2a2a2",
+                "name": "Dictionary"
+              },
+              {
+                "icon": "exploration",
+                "link": "/explorer",
+                "color": "#a2a2a2",
+                "name": "Exploration"
+              },
+              {
+                "icon": "query",
+                "link": "/query",
+                "color": "#a2a2a2",
+                "name": "Query"
+              },
+              {
+                "icon": "workspace",
+                "link": "/workspace",
+                "color": "#a2a2a2",
+                "name": "Workspace"
+              },
+              {
+                "icon": "profile",
+                "link": "/identity",
+                "color": "#a2a2a2",
+                "name": "Profile"
+              }
+            ]
+          },
+          "topBar": {
+            "items": [
+              {
+                "icon": "upload",
+                "link": "/submission",
+                "name": "Submit Data"
+              },
+              {
+                "link": "https://gen3.org/resources/user",
+                "name": "Documentation"
+              }
+            ]
+          },
+          "login": {
+            "title": "Generic Data Commons",
+            "subTitle": "Explore, Analyze, and Share Data",
+            "text": "This website supports the management, analysis and sharing of human disease data for the research community and aims to advance basic understanding of the genetic basis of complex traits and accelerate discovery and development of therapies, diagnostic tests, and other technologies for diseases like cancer.",
+            "contact": "If you have any questions about access or the registration process, please contact ",
+            "email": "support@datacommons.io"
+          },
+          "certs": {},
+          "footerLogos": [
+            {
+              "src": "/src/img/gen3.png",
+              "href": "https://ctds.uchicago.edu/gen3",
+              "alt": "Gen3 Data Commons"
+            },
+            {
+              "src": "/src/img/createdby.png",
+              "href": "https://ctds.uchicago.edu/",
+              "alt": "Center for Translational Data Science at the University of Chicago"
+            }
+          ]
+        },
+        "requiredCerts": [],
+        "featureFlags": {
+          "explorer": true,
+          "noIndex": true,
+          "analysis": false,
+          "discovery": false,
+          "discoveryUseAggMDS": false,
+          "studyRegistration": false
+        },
+        "dataExplorerConfig": {
+          "charts": {
+            "project_id": {
+              "chartType": "count",
+              "title": "Projects"
+            },
+            "_case_id": {
+              "chartType": "count",
+              "title": "Cases"
+            },
+            "gender": {
+              "chartType": "pie",
+              "title": "Gender"
+            },
+            "race": {
+              "chartType": "bar",
+              "title": "Race"
+            }
+          },
+          "filters": {
+            "tabs": [
+              {
+                "title": "Case",
+                "fields":[
+                  "project_id",
+                  "gender",
+                  "race",
+                  "ethnicity"
+                ]
+              }
+            ]
+          },
+          "table": {
+            "enabled": false
+          },
+          "dropdowns": {},
+          "buttons": [],
+          "guppyConfig": {
+            "dataType": "case",
+            "nodeCountTitle": "Cases",
+            "fieldMapping": [
+              { "field": "disease_type", "name": "Disease type" },
+              { "field": "primary_site", "name": "Site where samples were collected"}
+            ],
+            "manifestMapping": {
+              "resourceIndexType": "file",
+              "resourceIdField": "object_id",
+              "referenceIdFieldInResourceIndex": "_case_id",
+              "referenceIdFieldInDataIndex": "node_id"
+            },
+            "accessibleFieldCheckList": ["_case_id"],
+            "accessibleValidationField": "_case_id"
+          }
+        },
+        "fileExplorerConfig": {
+          "charts": {
+            "data_type": {
+              "chartType": "stackedBar",
+              "title": "File Type"
+            },
+            "data_format": {
+              "chartType": "stackedBar",
+              "title": "File Format"
+            }
+          },
+          "filters": {
+            "tabs": [
+              {
+                "title": "File",
+                "fields": [
+                  "project_id",
+                  "data_type",
+                  "data_format"
+                ]
+              }
+            ]
+          },
+          "table": {
+            "enabled": true,
+            "fields": [
+              "project_id",
+              "file_name",
+              "file_size",
+              "object_id"
+            ]
+          },
+          "dropdowns": {},
+          "guppyConfig": {
+            "dataType": "file",
+            "fieldMapping": [
+              { "field": "object_id", "name": "GUID" }
+            ],
+            "nodeCountTitle": "Files",
+            "manifestMapping": {
+              "resourceIndexType": "case",
+              "resourceIdField": "_case_id",
+              "referenceIdFieldInResourceIndex": "object_id",
+              "referenceIdFieldInDataIndex": "object_id"
+            },
+            "accessibleFieldCheckList": ["_case_id"],
+            "accessibleValidationField": "_case_id",
+            "downloadAccessor": "object_id"
+          }
+        }
+      }
+
+
+revproxy:
+  enabled: true
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      acme.cert-manager.io/http01-edit-in-place: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+    - host: <<your-website-URL>>
+      paths:
+        - path: /
+          pathType: Prefix
+    tls:
+      - secretName: cm-gen3-certs-prod        # pragma: allowlist secret
+        hosts:
+          - <<your-website-URL>>
+
+sheepdog:
+  enabled: true
+  image:
+    tag: 2024.04 # this can be any latest of sheepdog, see https://quay.io/repository/cdis/sheepdog to select a version
+  fenceUrl: https://<<your-website-URL>>/user
+  volumeMounts:
+  - name: "config-volume"
+    readOnly: true
+    mountPath: "/var/www/sheepdog/settings.py"
+    subPath: "wsgi.py"
+
+ambassador:
+  enabled: false
+
+argo-wrapper:
+  enabled: false
+
+audit:
+  enabled: false
+
+sower:
+  enabled: false
+
+ssjdispatcher:
+  enabled: false
+
+wts:
+  enabled: false
+
+hatchery:
+  enabled: false
+
+manifestservice:
+  enabled: false
+
+metadata:
+  enabled: false
+
+pidgin:
+  enabled: false
+
+requestor:
+  enabled: false
