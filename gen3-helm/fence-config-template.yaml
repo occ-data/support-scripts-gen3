@@ -1,4 +1,4 @@
-BASE_URL: https://<<your_hostname>>/user
+BASE_URL: https://<<your-website-URL>>/user
 ACCESS_TOKEN_COOKIE_NAME: access_token
 ACCESS_TOKEN_EXPIRES_IN: 1200
 ALLOW_GOOGLE_LINKING: true
@@ -163,8 +163,8 @@ OPENID_CONNECT:
     scope: ""
     user_id_field: ""
   google:
-    client_id: "" # <<your_google_client_id>>
-    client_secret: "" # <<your_google_client_secret>>
+    client_id: "" # <<your-google-client-id>>
+    client_secret: "" # <<your-google-client-secret>>
     discovery_url: https://accounts.google.com/.well-known/openid-configuration
     mock: ""
     mock_default_user: test@example.com
