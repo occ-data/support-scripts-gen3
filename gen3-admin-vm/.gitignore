@@ -1,0 +1,14 @@
+outputs/
+config.tf
+
+# Terraform
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+
+# VS Code
+.vscode
+
+# Logs
+*.log
+

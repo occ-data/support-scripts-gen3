@@ -1,0 +1,9 @@
+module "gen3-admin" {
+  source = "./modules/gen3-admin-vm"
+  prefix = "gen3-admin"
+  ssh_allowed_ips = [ "x.x.x.x/32" ] // Set to your public IP address to restrict SSH access
+  aws_cli_profile = "gen3" // Set to the AWS CLI profile you want to use, this comes from your ~/.aws/credentials file
+  aws_region = "us-east-1" // Set to the AWS region you want to deploy to
+  vpc_cidr_block = "10.120.0.0/16" // Set to the CIDR block you want to use for the created VPC
+  subnet_cidr_block = "10.120.10.0/24" // Set to the CIDR block you want to use for the created subnet
+}
