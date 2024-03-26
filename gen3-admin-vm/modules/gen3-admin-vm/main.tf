@@ -160,7 +160,7 @@ resource "aws_instance" "main" {
     host        = self.public_ip
   }
   provisioner "file" {
-    source      = "${path.module}/scripts/test.sh"
+    source      = "${path.module}/scripts/provision.sh"
     destination = "/tmp/provision.sh"
   }
 
