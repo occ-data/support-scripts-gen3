@@ -87,7 +87,17 @@ case $operation in
         ;;
     2)
         # Code to copy the 'gen3-admin' SSH file and set permissions
-        echo "This script will copy the 'gen3-admin' SSH file to ~/.ssh/gen3-admin.pem and set permissions."
+ 
+        # ask for prefix used in config.tf
+        echo "Enter the prefix used in config.tf (e.g. 'gen3-admin'):"
+        read prefix
+
+        if [ -z "${prefix}" ]; then
+            echo "Error: Prefix cannot be empty."
+            exit 1
+        fi
+
+        echo "This script will copy the '${prefix}' SSH file to ~/.ssh/${prefix}.pem and set permissions."
         echo "Are you sure you want to proceed? (yes/no)"
 
         read confirmation
@@ -97,17 +107,33 @@ case $operation in
             exit 1
         fi
 
-        ## Check if the 'gen3-admin' SSH file exists
-        if [ ! -f "./outputs/gen3-admin.pem" ]; then
-            echo "Error: 'gen3-admin' SSH file does not exist."
+        # Check if the 'outputs' directory exists
+        if [ ! -d "./outputs" ]; then
+            echo "Error: 'outputs' directory does not exist."
             exit 1
         fi
 
-        cp "./outputs/gen3-admin.pem" "${HOME}/.ssh/gen3-admin.pem"
-        chmod 400 "${HOME}/.ssh/gen3-admin.pem"
+        # check if the "${prefix}.pem" file exists
+        if [ ! -f "./outputs/${prefix}.pem" ]; then
+            echo "Error: '${prefix}' SSH file does not exist."
+            exit 1
+        fi
 
-        echo "Copied 'gen3-admin' SSH file to ~/.ssh/gen3-admin.pem and set permissions."
+        cp "./outputs/${prefix}.pem" "${HOME}/.ssh/${prefix}.pem"
 
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to copy the SSH file."
+            exit 1
+        fi
+
+        chmod 400 "${HOME}/.ssh/${prefix}.pem"
+
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to set permissions on the SSH file."
+            exit 1
+        fi
+
+        echo "SSH file copied to ~/.ssh/${prefix}.pem and permissions set successfully."
         ;;
     *)
         echo "Invalid option."
