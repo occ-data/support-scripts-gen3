@@ -62,6 +62,8 @@ git clone https://github.com/occ-data/cloud-automation ~/code/cloud-automation
 
 git clone https://github.com/occ-data/gen3-helm ~/code/gen3-helm
 
+git clone https://github.com/occ-data/support-scripts-gen3.git ~/code/support-scripts-gen3
+
 # Set Gen3 command source
 cat >> ~/.bashrc << 'EOF'
 export GEN3_HOME=/home/ubuntu/code/cloud-automation
@@ -76,5 +78,3 @@ EOF
 
 
 source ~/.bashrc
-
-
