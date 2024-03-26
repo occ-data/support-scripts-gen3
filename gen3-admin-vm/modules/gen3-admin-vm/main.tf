@@ -144,7 +144,7 @@ resource "aws_instance" "main" {
   subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.main.id]
   key_name               = var.prefix
-  iam_instance_profile = aws_iam_instance_profile.admin_vm_instance_profile.name
+  iam_instance_profile   = aws_iam_instance_profile.admin_vm_instance_profile.name
 
   tags = {
     Name = "${var.prefix}"
@@ -160,7 +160,7 @@ resource "aws_instance" "main" {
     host        = self.public_ip
   }
   provisioner "file" {
-    source      = "${path.module}/scripts/provision.sh"
+    source      = "${path.module}/scripts/test.sh"
     destination = "/tmp/provision.sh"
   }
 
@@ -168,6 +168,18 @@ resource "aws_instance" "main" {
     inline = [
       "chmod +x /tmp/provision.sh",
       "bash /tmp/provision.sh"
+    ]
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/scripts/install-awscli.sh"
+    destination = "/tmp/install-awscli.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/install-awscli.sh",
+      "bash /tmp/install-awscli.sh"
     ]
   }
 

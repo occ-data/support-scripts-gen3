@@ -1,11 +1,17 @@
 #!/bin/bash
 
-ENV TERRAFORM_VERSION="0.11.15"
+# Define variables
+TERRAFORM_VERSION="0.11.15"
+APT_OPTIONS="-y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\""
+DEBIAN_FRONTEND="noninteractive"
+# Path to the AWS CLI configuration file
+AWS_CONFIG_FILE=~/.aws/config
+AWS_REGION=us-east-1
 
 # Update and install necessary packages
-sudo DEBIAN_FRONTEND=noninteractive apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" build-essential curl file git jq unzip apt-transport-https ca-certificates awscli needrestart
+sudo apt-get update
+sudo apt-get upgrade $APT_OPTIONS
+sudo apt-get install $APT_OPTIONS build-essential curl file git apt-transport-https ca-certificates needrestart
 
 # Configure needrestart to operate in non-interactive mode (automatically restart services)
 # Check if non-interactive mode is already set, if not, set it.
@@ -38,14 +44,17 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.
 
 # Install helm and kubectl
 sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" helm kubectl
+sudo apt-get install helm -y
+sudo apt-get install kubectl -y
 
-sudo apt install awscli -y
 sudo apt install unzip -y
+sudo apt install jq -y
+
+source ~/.bashrc
 
 # Setup tfenv for Terraform versions management
-tfenv install "0.11.15"
-tfenv use "0.11.15"
+tfenv install $TERRAFORM_VERSION
+tfenv use $TERRAFORM_VERSION
 
 # Clone the specified repository into ~/code/
 mkdir -p ~/code

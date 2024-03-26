@@ -12,3 +12,6 @@ terraform.tfstate.backup
 # Logs
 *.log
 
+# terraform plan output
+*.out
+
