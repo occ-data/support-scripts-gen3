@@ -75,6 +75,10 @@ fi
 complete -C '/usr/local/bin/aws_completer' aws
 EOF
 
-
-
 source ~/.bashrc
+
+cat >> ~/.aws/config << 'EOF'
+[default]
+region = us-east-1
+output = json
+EOF

@@ -17,6 +17,7 @@ kubectl create secret generic prelim-aws-config --from-literal=access-key='YOUR.
 - For Gen3 Databases, the gen3 helm script uses the external secrets, this external secrets follows the naming convention of [`{{environment}}-{{service}}-creds`](https://github.com/uc-cdis/gen3-helm/blob/master/helm/common/templates/_external_secrets.tpl#L1-L10)
 
 - The variables shown in `gen3_values.yaml` are following
+    - `<<kubectl-aws-iam-secret>>`: name of kubernetes secret which have AWS IAM User's secret ID and key. This user have permission to AWS Secrets manager to create external secrets in kubernetes. you can create this secret either by executing `external_secrets.sh` or with command `kubectl create secret generic "$iam_user"-secret --from-literal=access-key=$access_key --from-literal=secret-access-key=$secret_key`
     - `<<your-vpc-name>>` : name of the VPC/environment
     - `<<your-website-URL>>`: URL of your website without http:// or https://
     - `<<your-website-aws-certificate-arn>>` : ARN of the certificate for the domain/website which will be spun
@@ -50,9 +51,7 @@ This file configures our Authentication service **Fence**.  The primary configur
     - `<<your-website-URL>>` : URL of your website without http:// or https://
     - `<<your-google-client-id>>` : (depends on your iDP) Your google project's client ID
     - `<<your-google-client-secret>>` : (depends on your iDP) Your google project's client secret
- 
+
 - Once you have configured the mentioned values, you are expected to manually provide the updated contents to your AWS Secrets Manager
     - Ideally, name your secret `<<your-vpc-name>>-fence-config`
     - This should match up your values configuration for `.Values.fence.externalSecrets.fenceConfig`
- 
-
