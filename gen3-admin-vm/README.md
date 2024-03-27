@@ -16,7 +16,7 @@ terraform-root/
 │       ├── scripts/
 │       │   └── provision.sh
 │       └── README.md
-│
+├── quickstart.sh
 ├── outputs/
 ├── config.tf
 ├── variables.tf
@@ -88,6 +88,49 @@ The provisioning script `scripts/provision.sh` is executed on the provisioned EC
     ```bash
     terraform destroy
     ```
+
+## Guided Terraform Workflow and SSH Management
+
+For users looking for a more guided approach to managing Terraform operations and SSH permissions, we offer a supplementary script. This script provides a user-friendly menu to facilitate Terraform infrastructure management and automate the process of setting SSH file permissions.
+
+### Prerequisites
+- Terraform installed on your machine. If Terraform is not installed, please follow the installation instructions available at Terraform's official documentation.
+- SSH key files generated and located in the expected directory if managing SSH permissions.
+
+### Usage
+To start the script, navigate to the directory containing the script and run:
+
+```bash
+bash ./quickstart.sh
+```
+
+### Options Menu
+
+Upon execution, the script presents two options:
+
+1. **Manage Terraform Infrastructure**: Initiate Terraform operations such as initialization, planning, applying plans, or destroying infrastructure.
+2. **Copy 'admin-vm' SSH File and Set Permissions**: Copy a specified SSH key file to the user's `.ssh` directory and set the appropriate permissions.
+
+Enter `1` or `2` to select your desired operation.
+
+### Managing Terraform Infrastructure
+If you select option `1`, you will be prompted to choose from initializing Terraform, creating a plan, applying an existing plan, or destroying the infrastructure. Ensure Terraform is installed; otherwise, the script will exit with an error message.
+
+### Setting Up SSH File Permissions
+Selecting option `2` prompts you for the prefix used in your config.tf file. This prefix is crucial for identifying the correct SSH file to copy and set permissions on. Ensure the outputs directory exists and contains the SSH file named after your prefix, or the script will notify you of the error.
+
+### Exit Codes
+
+The script may exit with one of the following codes:
+
+- `0`: Success
+- `1`: General error or invalid option selected
+
+### Troubleshooting
+
+- Ensure Terraform is correctly installed and accessible via the command line.
+- Verify the SSH key file exists in the specified `outputs` directory before attempting to set permissions.
+- For any permission issues, manually check the permissions of the directory and files involved.
 
 ## Important Notes
 
