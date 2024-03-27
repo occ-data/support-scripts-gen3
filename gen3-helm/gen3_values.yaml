@@ -3,7 +3,7 @@ global:
     enabled: true
     useLocalSecret:
       enabled: true
-      localSecretName: prelim-aws-config       # pragma: allowlist secret
+      localSecretName: <<kubectl-aws-iam-secret>>      # pragma: allowlist secret
   postgres:
     dbCreate: true
   externalSecrets:
