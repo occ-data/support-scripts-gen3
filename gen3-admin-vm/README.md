@@ -39,6 +39,7 @@ The Terraform configuration provisions the following AWS resources:
 - SSH Key Pair
 - Elastic IP (EIP)
 - EC2 Instance
+- IAM Role and AWS Admin Policy for EC2 Instance
 
 ## Provisioning Script
 
